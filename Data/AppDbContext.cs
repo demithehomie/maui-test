@@ -10,6 +10,9 @@ namespace BTGClientManager.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+                modelBuilder.Entity<Client>()
+                 .ToTable("clients"); // Use lowercase for PostgreSQL
+
             modelBuilder.Entity<Client>().HasKey(c => c.Id);
             modelBuilder.Entity<Client>().Property(c => c.Name).IsRequired();
             modelBuilder.Entity<Client>().Property(c => c.Lastname).IsRequired();

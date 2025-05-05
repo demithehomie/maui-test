@@ -1,79 +1,116 @@
-﻿using System.Reflection;
-using Microsoft.Maui.Hosting;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Maui.Hosting;
+using Npgsql;
 using BTGClientManager.Data;
 using BTGClientManager.Services;
 using BTGClientManager.ViewModels;
 using BTGClientManager.Views;
 using BtgClientManager.Converters;
+using BTGClientManager.Helpers;
+using System.Diagnostics;
 
 namespace BTGClientManager;
 
 public static class MauiProgram
 {
-   public static MauiApp CreateMauiApp()
-{
-    var builder = MauiApp.CreateBuilder()
-        .UseMauiApp<App>()
-        .ConfigureFonts(fonts =>
-        {
-            fonts.AddFont("OpenSans-Regular.ttf",  "OpenSansRegular");
-            fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-        });
+    // 🔐 Coloque aqui a connection-string que você quiser usar.
+    // Exemplo: local/ou remota — escolha uma e comente a outra.
+    private const string ConnectionString =
+        // @"Host=localhost;Port=5432;Database=btgclientdb;Username=postgres;Password=sua_senha";
+        @"Host=dpg-d0cdknqli9vc73b7v4ng-a.oregon-postgres.render.com;Port=5432;Database=testemaui;Username=demetrius;Password=sMTTzzwwrekZIRhCzIU4twOJb1GSPjlc;SslMode=Require;Trust Server Certificate=true";
 
-    // 1) appsettings.json
-    builder.Configuration.AddJsonFile("appsettings.json", optional: false);
-
-    // 2) DbContext/Postgres
-    var conn = builder.Configuration.GetConnectionString("Postgres")!;
-    builder.Services.AddDbContextFactory<AppDbContext>(opt =>
-        opt.UseNpgsql(conn, npg => npg.EnableRetryOnFailure(3)));
-
-    // 3) Demais serviços
-    builder.Services.AddTransient<IClientService, ClientServicePersistent>();
-    builder.Services.AddSingleton<StringCombinerConverter>();
-
-    builder.Services.AddTransient<ClientListViewModel>();
-    builder.Services.AddTransient<ClientDetailViewModel>();
-    builder.Services.AddTransient<ClientListPage>();
-    builder.Services.AddTransient<ClientDetailPage>();
+    public static MauiApp CreateMauiApp()
+    {
+        var builder = MauiApp.CreateBuilder()
+            .UseMauiApp<App>()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf",  "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            });
 
 #if DEBUG
-    builder.Logging.AddDebug();
+        builder.Logging.AddDebug();
 #endif
 
-    // 🔸 constrói UMA ÚNICA VEZ
-    var app = builder.Build();
+        try
+        {
+            // Diagnosticar e corrigir problemas de conexão 
+            Task.Run(async () => 
+            {
+                try
+                {
+                    // Garantir criação da tabela
+                    await ConnectionDebugHelper.EnsureTableCreated(ConnectionString);
+                    
+                    // Executar diagnóstico e mostrar resultados detalhados
+                    var diagnosis = await ConnectionDebugHelper.DiagnoseConnection(ConnectionString);
+                    Debug.WriteLine("==== DIAGNÓSTICO DE CONEXÃO ====");
+                    Debug.WriteLine(diagnosis);
+                    Debug.WriteLine("================================");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"ERRO AO DIAGNOSTICAR: {ex}");
+                }
+            }).Wait();
 
-    // 🔸 aplica migrations após a construção
-    using (var scope = app.Services.CreateScope())
-  {
-    // resolve via fábrica (não precisa AddDbContext duplicado)
-    var db = scope.ServiceProvider
-                  .GetRequiredService<IDbContextFactory<AppDbContext>>()
-                  .CreateDbContext();
-    db.Database.Migrate();        // cria/atualiza tabelas
-}
+            // Configura o DbContextFactory com modificações de case sensitivity
+            builder.Services.AddDbContextFactory<AppDbContext>(opt =>
+                opt.UseNpgsql(ConnectionString, npgsqlOptions =>
+                    npgsqlOptions.EnableRetryOnFailure(3)  // Adiciona retentativas em caso de falha
+                )
+                .LogTo(message => Debug.WriteLine($"[EF Core] {message}"), 
+                       LogLevel.Information)
+                .EnableSensitiveDataLogging()
+            );
 
-    return app;
-}
+            // Serviços, converters, VMs e páginas.
+            builder.Services.AddTransient<IClientService, ClientServicePersistent>();
+            builder.Services.AddSingleton<StringCombinerConverter>();
+            builder.Services.AddTransient<ClientListViewModel>();
+            builder.Services.AddTransient<ClientDetailViewModel>();
+            builder.Services.AddTransient<ClientListPage>();
+            builder.Services.AddTransient<ClientDetailPage>();
 
+            // Constrói e testa a conexão
+            var app = builder.Build();
 
-  
-
-#if WINDOWS
-    public class Win32Interop
-    {
-        public const int SW_MAXIMIZE = 3;
-
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern IntPtr GetWindowByHandle(IntPtr hwnd);
-
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+            // Verifica a conexão com o banco dentro de um novo escopo
+            using (var scope = app.Services.CreateScope())
+            {
+                var ctxFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+                using var db = ctxFactory.CreateDbContext();
+                
+                // Força o EF Core a tentar conectar
+                var canConnect = db.Database.CanConnect();
+                Debug.WriteLine($"Teste de conexão EF Core: {(canConnect ? "SUCESSO" : "FALHA")}");
+                
+                if (canConnect)
+                {
+                    Debug.WriteLine("Executando Migrate...");
+                    db.Database.Migrate();
+                    
+                    // Testa se consegue contar os clientes
+                    try
+                    {
+                        var count = db.Clients.Count();
+                        Debug.WriteLine($"Contagem de clientes: {count}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Erro ao contar clientes: {ex.Message}");
+                    }
+                }
+            }
+            
+            return app;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"ERRO CRÍTICO NA INICIALIZAÇÃO: {ex}");
+            throw; // Reraise para que o erro não passe despercebido
+        }
     }
-#endif
 }

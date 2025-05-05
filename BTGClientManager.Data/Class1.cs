@@ -13,7 +13,7 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
         // carrega appsettings.json de forma independente do MAUI
         var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile("appSettings.json", optional: false)
             .Build();
 
         var conn = config.GetConnectionString("Postgres") ??

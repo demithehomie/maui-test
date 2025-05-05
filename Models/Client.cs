@@ -4,7 +4,7 @@ namespace BTGClientManager.Models
 {
     public class Client
     {
-        public string? Title { get; set; }  // ← novo campo opcional
+      
 
         public int Id { get; set; }
         
