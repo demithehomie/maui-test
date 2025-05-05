@@ -1,22 +1,28 @@
-using BTGClientManager.Models;
 using Microsoft.EntityFrameworkCore;
-using System.IO;
+using BTGClientManager.Models;
 
 namespace BTGClientManager.Data
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+    public class AppDbContext : DbContext
     {
-        public DbSet<Client> Clients { get; set; }
+        public DbSet<Client> Clients => Set<Client>();
+
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-                modelBuilder.Entity<Client>()
-                 .ToTable("clients"); // Use lowercase for PostgreSQL
+            modelBuilder.Entity<Client>(entity =>
+            {
+                entity.ToTable("clients"); // nome da tabela
+                entity.HasKey(e => e.Id);
 
-            modelBuilder.Entity<Client>().HasKey(c => c.Id);
-            modelBuilder.Entity<Client>().Property(c => c.Name).IsRequired();
-            modelBuilder.Entity<Client>().Property(c => c.Lastname).IsRequired();
-            modelBuilder.Entity<Client>().Property(c => c.Address).IsRequired();
+                entity.Property(e => e.Id).HasColumnName("Id");
+                entity.Property(e => e.Name).HasColumnName("Name");
+                entity.Property(e => e.Lastname).HasColumnName("Lastname");
+                entity.Property(e => e.Age).HasColumnName("Age");
+                entity.Property(e => e.Address).HasColumnName("Address");
+            });
         }
     }
 }

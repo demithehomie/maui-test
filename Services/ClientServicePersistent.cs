@@ -23,12 +23,15 @@ namespace BTGClientManager.Services
         return await db.Clients.FindAsync(id);
     }
 
-    public async Task AddClientAsync(Client client)
-    {
-        await using var db = await _factory.CreateDbContextAsync();
-        db.Clients.Add(client);
-        await db.SaveChangesAsync();
-    }
+public async Task AddClientAsync(Client client)
+{
+    //Debug.WriteLine($"[DEBUG] Nome: {client.Name}, Sobrenome: {client.Lastname}, Idade: {client.Age}, Endereço: {client.Address}");
+
+    await using var db = await _factory.CreateDbContextAsync();
+    db.Clients.Add(client);
+    await db.SaveChangesAsync();
+}
+
 
     public async Task UpdateClientAsync(Client client)
     {

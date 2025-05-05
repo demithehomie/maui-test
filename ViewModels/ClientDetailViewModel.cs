@@ -1,41 +1,71 @@
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
 using BTGClientManager.Models;
 using BTGClientManager.Services;
-using Microsoft.Maui.Controls;   //  para Command
+using System.Windows.Input;
 
 namespace BTGClientManager.ViewModels
 {
-   public class ClientDetailViewModel : BaseViewModel, IQueryAttributable
-{
-    private readonly IClientService _svc;
-    public Client Client { get; private set; } = new();
-
-    public ICommand SaveCommand   { get; }
-    public ICommand CancelCommand { get; }
-
-    public ClientDetailViewModel(IClientService svc)
+    [QueryProperty(nameof(ClientId), "ClientId")]
+    public class ClientDetailViewModel : BaseViewModel
     {
-        _svc = svc;
-        SaveCommand   = new Command(async () => await Save());
-        CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+        private readonly IClientService _svc;
+
+        public int ClientId { get; set; } = 0;
+        public string Title { get; set; } = "Novo Cliente";
+
+        public string Name { get; set; } = string.Empty;
+        public string Lastname { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public int Age { get; set; } = 0;
+
+        public ICommand SaveCommand { get; }
+        public ICommand CancelCommand { get; }
+
+        public ClientDetailViewModel(IClientService svc)
+        {
+            _svc = svc;
+
+            SaveCommand = new Command(async () => await SaveAsync());
+            CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+        }
+
+        public async void OnNavigatedTo()
+        {
+            if (ClientId > 0)
+            {
+                var client = await _svc.GetClientByIdAsync(ClientId);
+                if (client != null)
+                {
+                    Title = "Editar Cliente";
+                    Name = client.Name;
+                    Lastname = client.Lastname;
+                    Address = client.Address;
+                    Age = client.Age;
+                    OnPropertyChanged(nameof(Name));
+                    OnPropertyChanged(nameof(Lastname));
+                    OnPropertyChanged(nameof(Address));
+                    OnPropertyChanged(nameof(Age));
+                    OnPropertyChanged(nameof(Title));
+                }
+            }
+        }
+
+        private async Task SaveAsync()
+        {
+            var client = new Client
+            {
+                Id = ClientId,
+                Name = Name,
+                Lastname = Lastname,
+                Address = Address,
+                Age = Age
+            };
+
+            if (ClientId > 0)
+                await _svc.UpdateClientAsync(client);
+            else
+                await _svc.AddClientAsync(client);
+
+            await Shell.Current.GoToAsync("..");
+        }
     }
-
-    public async void ApplyQueryAttributes(IDictionary<string, object> query)
-    {
-        if (query.TryGetValue("ClientId", out var idObj) && idObj is int id && id > 0)
-            Client = await _svc.GetClientByIdAsync(id) ?? new Client();
-        OnPropertyChanged(nameof(Client));            // avisa o binding
-    }
-
-    private async Task Save()
-    {
-        if (Client.Id == 0) await _svc.AddClientAsync(Client);
-        else                await _svc.UpdateClientAsync(Client);
-
-        await Shell.Current.GoToAsync("..");
-    }
-}
-
 }
