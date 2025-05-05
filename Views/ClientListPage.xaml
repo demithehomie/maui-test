@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:BTGClientManager.ViewModels"
+    xmlns:models="clr-namespace:BTGClientManager.Models"
+    x:Class="BTGClientManager.Views.ClientListPage"
+    Title="Clientes"
+    x:DataType="viewmodels:ClientListViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="10">
+
+        <Label Text="Lista de Clientes"
+               FontSize="24"
+               FontAttributes="Bold"/>
+
+        <!-- LISTA -->
+        <RefreshView Grid.Row="1"
+                     Command="{Binding RefreshCommand}"
+                     IsRefreshing="{Binding IsBusy}">
+
+            <CollectionView ItemsSource="{Binding Clients}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedClient, Mode=TwoWay}">
+
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Padding="40,80">
+                        <Label Text="Nenhum cliente cadastrado"
+                               FontSize="18"
+                               TextColor="Gray"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+
+                <!-- AVISO SOME AQUI -->
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Client">  <!--  ←  ESSENCIAL  -->
+
+                        <Border Margin="5" Padding="10" Stroke="LightGray">
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+
+                                <!-- Nome completo -->
+                                <Label Text="{Binding Name}"
+                                       FontSize="18"
+                                       FontAttributes="Bold"/>
+
+                                <Label Text="{Binding Lastname}"
+                                       Grid.Column="0"
+                                       Margin="0,22,0,0"
+                                       FontSize="18"
+                                       FontAttributes="Bold"/>
+
+                                <!-- Idade e endereço -->
+                                <VerticalStackLayout Grid.Column="0" Margin="0,44,0,0">
+                                    <Label Text="{Binding Age, StringFormat='Idade: {0}'}"
+                                           FontSize="14"/>
+                                    <Label Text="{Binding Address, StringFormat='Endereço: {0}'}"
+                                           FontSize="14"/>
+                                </VerticalStackLayout>
+
+                                <!-- Botões (herdam contexto do ClientListViewModel) -->
+                                <Button Grid.Column="1"
+                                        Text="Editar"
+                                        Command="{Binding Source={x:Reference root}, Path=BindingContext.EditClientCommand}"
+                                        CommandParameter="{Binding .}"
+                                        Margin="0,0,5,0"/>
+
+                                <Button Grid.Column="2"
+                                        Text="Excluir"
+                                        BackgroundColor="Red"
+                                        Command="{Binding Source={x:Reference root}, Path=BindingContext.DeleteClientCommand}"
+                                        CommandParameter="{Binding .}"/>
+                            </Grid>
+                        </Border>
+
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <Button Grid.Row="2"
+                Text="Adicionar Cliente"
+                WidthRequest="200"
+                HorizontalOptions="Center"
+                Command="{Binding AddClientCommand}"
+                Margin="0,10,0,0"/>
+
+    </Grid>
+</ContentPage>

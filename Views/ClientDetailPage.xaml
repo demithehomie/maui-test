@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:BTGClientManager.ViewModels"
+             xmlns:behaviors="clr-namespace:BTGClientManager.Behaviors"
+             x:Class="BTGClientManager.Views.ClientDetailPage"
+             Title="{Binding Title}"
+             x:DataType="viewmodels:ClientDetailViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="{Binding Title}" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center"/>
+
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Nome:" FontSize="14" />
+                <Entry Text="{Binding Name}" Placeholder="Digite o nome"/>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Sobrenome:" FontSize="14" />
+                <Entry Text="{Binding Lastname}" Placeholder="Digite o sobrenome"/>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Idade:" FontSize="14" />
+                <Entry Text="{Binding Age}" Placeholder="Digite a idade" Keyboard="Numeric">
+                   
+                </Entry>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Endereço:" FontSize="14" />
+                <Entry Text="{Binding Address}" Placeholder="Digite o endereço"/>
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="20" Margin="0,20,0,0">
+                <Button Text="Salvar" 
+                        Command="{Binding SaveCommand}"
+                        WidthRequest="120"/>
+                
+                <Button Text="Cancelar" 
+                        Command="{Binding CancelCommand}"
+                        WidthRequest="120"
+                        BackgroundColor="Gray"/>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

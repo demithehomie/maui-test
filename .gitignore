@@ -1,0 +1,76 @@
+# Build e binários
+bin/
+obj/
+*/bin/
+*/obj/
+
+# Diretórios de publicação
+AppPackages/
+TestResults/
+*.app/
+*.apk/
+*.apks/
+*.aab/
+*.msi
+*.nupkg
+
+# Arquivos de log e temporários
+*.log
+*.tlog
+*.vspscc
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DS_Store
+*.vscode/
+
+# VS 2022+
+.vs/
+.vscode/
+
+# Configurações do Rider
+.idea/
+*.sln.iml
+
+# Cache do NuGet
+.nuget/
+packages/
+*.nupkg
+
+# Configurações locais e de depuração
+*.dbmdl
+*.bak
+*.cache
+*.pdb
+
+# Arquivos gerados de plataforma
+platforms/android/.gradle/
+platforms/android/.idea/
+platforms/android/build/
+platforms/android/app/build/
+platforms/android/local.properties
+
+# Arquivos de build específicos do MAUI
+*.xcuserstate
+*.xcworkspace
+*.xcodeproj
+*.xcodeproj/*
+*.plist
+*.maui.*
+
+
+# Certificados e senhas
+*.pfx
+*.key
+*.pem
+*.cert
+
+# Arquivos de publicação para Android e iOS
+*.keystore
+*.jks
+
+# Outros
+Thumbs.db
+ehthumbs.db
+desktop.ini
