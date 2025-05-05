@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace BtgClientManager;
+namespace BTGClientManager.Platforms.iOS;
 
 public class Program
 {

@@ -1,9 +1,10 @@
 ﻿using Foundation;
 
-namespace BtgClientManager;
-
-[Register("AppDelegate")]
-public class AppDelegate : MauiUIApplicationDelegate
+namespace BTGClientManager.Platforms.iOS
 {
-	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+    [Register("AppDelegate")]
+    public class AppDelegate : MauiUIApplicationDelegate
+    {
+    	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+    }
 }

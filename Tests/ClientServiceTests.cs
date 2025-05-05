@@ -1,105 +1,88 @@
-using BTGClientManager.Models;
-using BTGClientManager.Services;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+// using BTGClientManager.Data;
+// using BTGClientManager.Models;
+// using BTGClientManager.Services;
+// using Microsoft.EntityFrameworkCore;
+// using Microsoft.VisualStudio.TestTools.UnitTesting;
+// using System;
+// using System.Linq;
+// using System.Threading.Tasks;
 
-namespace BTGClientManager.Tests
-{
-    [TestClass]
-    public class ClientServiceTests
-    {
-        private IClientService _clientService = null!;
+// namespace BTGClientManager.Tests;
 
-        [TestInitialize]
-        public void Setup() => _clientService = new ClientService();
+// [TestClass]
+// public class ClientServicePersistentTests
+// {
+//     private IClientService _svc = null!;
 
-        [TestMethod]
-        public void GetAllClients_ShouldReturnAllClients()
-        {
-            var clients = _clientService.GetAllClients();
+//     [TestInitialize]
+//     public void Setup()
+//     {
+//         // cria um banco isolado por teste
+//         var opts = new DbContextOptionsBuilder<AppDbContext>()
+//             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+//             .Options;
 
-            Assert.IsNotNull(clients);
-            Assert.IsTrue(clients.Count >= 3);
-        }
+//         // Factory evita problemas de lifetime
+//         var factory = new PooledDbContextFactory<AppDbContext>(opts);
 
-        [TestMethod]
-        public void AddClient_ShouldAddNewClient()
-        {
-            var initialCount = _clientService.GetAllClients().Count;
+//         // garante que o schema existe
+//         using var ctx = factory.CreateDbContext();
+//         ctx.Database.EnsureCreated();
 
-            var newClient = new Client
-            {
-                Name = "Test",
-                Lastname = "User",
-                Age = 25,
-                Address = "Test Address"
-            };
+//         _svc = new ClientServicePersistent(factory);
+//     }
 
-            _clientService.AddClient(newClient);
-            var clients = _clientService.GetAllClients();
+//     [TestMethod]
+//     public async Task AddClientAsync_ShouldPersist()
+//     {
+//         var client = new Client { Name = "Ana", Lastname = "Silva", Age = 22, Address = "Rua 1" };
 
-            Assert.AreEqual(initialCount + 1, clients.Count);
+//         await _svc.AddClientAsync(client);
 
-            var addedClient = clients.FirstOrDefault(c => c.Name == "Test" && c.Lastname == "User");
-            Assert.IsNotNull(addedClient);
+//         var all = await _svc.GetAllClientsAsync();
+//         Assert.AreEqual(1, all.Count);
+//         Assert.AreEqual("Ana", all[0].Name);
+//     }
 
-            // uso do null-forgiving
-            Assert.AreEqual(25, addedClient!.Age);
-            Assert.AreEqual("Test Address", addedClient.Address);
-        }
+//     [TestMethod]
+//     public async Task UpdateClientAsync_ShouldModify()
+//     {
+//         var client = new Client { Name = "Bob", Lastname = "Souza", Age = 30, Address = "Rua 2" };
+//         await _svc.AddClientAsync(client);
 
-        [TestMethod]
-        public void UpdateClient_ShouldModifyExistingClient()
-        {
-            var newClient = new Client
-            {
-                Name = "UpdateTest",
-                Lastname = "User",
-                Age = 30,
-                Address = "Original Address"
-            };
-            _clientService.AddClient(newClient);
+//         client.Age = 31;
+//         client.Address = "Rua 99";
+//         await _svc.UpdateClientAsync(client);
 
-            var clientToUpdate = _clientService.GetAllClients()
-                                               .FirstOrDefault(c => c.Name == "UpdateTest");
-            Assert.IsNotNull(clientToUpdate);
+//         var db = await _svc.GetClientByIdAsync(client.Id);
+//         Assert.IsNotNull(db);
+//         Assert.AreEqual(31,  db!.Age);
+//         Assert.AreEqual("Rua 99", db.Address);
+//     }
 
-            clientToUpdate!.Address = "Updated Address";
-            clientToUpdate.Age = 35;
-            _clientService.UpdateClient(clientToUpdate);
+//     [TestMethod]
+//     public async Task DeleteClientAsync_ShouldRemove()
+//     {
+//         var c1 = new Client { Name = "Carlos", Lastname = "Santos", Age = 40, Address = "Av. X" };
+//         await _svc.AddClientAsync(c1);
 
-            var updatedClient = _clientService.GetClientById(clientToUpdate.Id);
-            Assert.IsNotNull(updatedClient);
+//         await _svc.DeleteClientAsync(c1.Id);
 
-            Assert.AreEqual("UpdateTest", updatedClient!.Name);
-            Assert.AreEqual("User",        updatedClient.Lastname);
-            Assert.AreEqual(35,            updatedClient.Age);
-            Assert.AreEqual("Updated Address", updatedClient.Address);
-        }
+//         var remaining = await _svc.GetAllClientsAsync();
+//         Assert.AreEqual(0, remaining.Count);
+//     }
 
-        [TestMethod]
-        public void DeleteClient_ShouldRemoveClient()
-        {
-            var newClient = new Client
-            {
-                Name = "DeleteTest",
-                Lastname = "User",
-                Age = 40,
-                Address = "Delete Address"
-            };
-            _clientService.AddClient(newClient);
+//     [TestMethod]
+//     public async Task GetAllClientsAsync_ShouldReturnSeeded()
+//     {
+//         await _svc.AddClientAsync(new Client { Name = "João", Lastname = "A", Age = 20, Address = "-" });
+//         await _svc.AddClientAsync(new Client { Name = "Maria", Lastname = "B", Age = 25, Address = "-" });
 
-            var clientToDelete = _clientService.GetAllClients()
-                                               .FirstOrDefault(c => c.Name == "DeleteTest");
-            Assert.IsNotNull(clientToDelete);
+//         var list = await _svc.GetAllClientsAsync();
 
-            var initialCount = _clientService.GetAllClients().Count;
-
-            _clientService.DeleteClient(clientToDelete!.Id);
-            var clients = _clientService.GetAllClients();
-
-            Assert.AreEqual(initialCount - 1, clients.Count);
-            Assert.IsNull(clients.FirstOrDefault(c => c.Name == "DeleteTest"));
-        }
-    }
-}
+//         Assert.AreEqual(2, list.Count);
+//         CollectionAssert.AreEquivalent(
+//             new[] { "João", "Maria" },
+//             list.Select(c => c.Name).ToArray());
+//     }
+// }

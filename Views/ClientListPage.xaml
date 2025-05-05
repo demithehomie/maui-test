@@ -85,6 +85,5 @@
                 HorizontalOptions="Center"
                 Command="{Binding AddClientCommand}"
                 Margin="0,10,0,0"/>
-
     </Grid>
 </ContentPage>

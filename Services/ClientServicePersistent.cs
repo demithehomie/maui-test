@@ -5,61 +5,47 @@ using System.Collections.ObjectModel;
 
 namespace BTGClientManager.Services
 {
-    public class ClientServicePersistent : IClientService
+
+      public class ClientServicePersistent : IClientService
+{
+    private readonly IDbContextFactory<AppDbContext> _factory;
+    public ClientServicePersistent(IDbContextFactory<AppDbContext> factory) => _factory = factory;
+
+    public async Task<List<Client>> GetAllClientsAsync()
     {
-        private readonly AppDbContext _dbContext;
-
-        public ClientServicePersistent(AppDbContext dbContext)
-        {
-            _dbContext = dbContext;
-            
-            // Add sample data if database is empty
-            if (!_dbContext.Clients.Any())
-            {
-                _dbContext.Clients.Add(new Client { Name = "João", Lastname = "Silva", Age = 30, Address = "Rua A, 123" });
-                _dbContext.Clients.Add(new Client { Name = "Maria", Lastname = "Santos", Age = 25, Address = "Av. B, 456" });
-                _dbContext.Clients.Add(new Client { Name = "Carlos", Lastname = "Ferreira", Age = 40, Address = "Praça C, 789" });
-                _dbContext.SaveChanges();
-            }
-        }
-
-        public List<Client> GetAllClients()
-        {
-            return _dbContext.Clients.ToList();
-        }
-
-        public Client GetClientById(int id)
-        {
-            return _dbContext.Clients.FirstOrDefault(c => c.Id == id) ?? new Client();
-        }
-
-        public void AddClient(Client client)
-        {
-            _dbContext.Clients.Add(client);
-            _dbContext.SaveChanges();
-        }
-
-        public void UpdateClient(Client client)
-        {
-            var existingClient = _dbContext.Clients.FirstOrDefault(c => c.Id == client.Id);
-            if (existingClient != null)
-            {
-                existingClient.Name = client.Name;
-                existingClient.Lastname = client.Lastname;
-                existingClient.Age = client.Age;
-                existingClient.Address = client.Address;
-                _dbContext.SaveChanges();
-            }
-        }
-
-        public void DeleteClient(int id)
-        {
-            var client = _dbContext.Clients.FirstOrDefault(c => c.Id == id);
-            if (client != null)
-            {
-                _dbContext.Clients.Remove(client);
-                _dbContext.SaveChanges();
-            }
-        }
+        await using var db = await _factory.CreateDbContextAsync();
+        return await db.Clients.AsNoTracking().OrderBy(c => c.Name).ToListAsync();
     }
+
+    public async Task<Client?> GetClientByIdAsync(int id)
+    {
+        await using var db = await _factory.CreateDbContextAsync();
+        return await db.Clients.FindAsync(id);
+    }
+
+    public async Task AddClientAsync(Client client)
+    {
+        await using var db = await _factory.CreateDbContextAsync();
+        db.Clients.Add(client);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task UpdateClientAsync(Client client)
+    {
+        await using var db = await _factory.CreateDbContextAsync();
+        db.Clients.Update(client);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task DeleteClientAsync(int id)
+    {
+        await using var db = await _factory.CreateDbContextAsync();
+        var entity = await db.Clients.FindAsync(id);
+        if (entity is null) return;
+        db.Clients.Remove(entity);
+        await db.SaveChangesAsync();
+    }
+}
+
+
 }
