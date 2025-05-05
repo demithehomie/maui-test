@@ -5,6 +5,7 @@
     xmlns:viewmodels="clr-namespace:BTGClientManager.ViewModels"
     xmlns:models="clr-namespace:BTGClientManager.Models"
     x:Class="BTGClientManager.Views.ClientListPage"
+    x:Name="root" 
     Title="Clientes"
     x:DataType="viewmodels:ClientListViewModel">
 
